@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RKitek - Owner Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { oswald: ['Oswald', 'sans-serif'], sans: ['Inter', 'sans-serif'] },
+      colors: {
+        navy: { DEFAULT: '#0B2545', dark: '#081A33', light: '#3D5A80' },
+        slate: { DEFAULT: '#475467', light: '#98A2B3', pale: '#F2F4F7' },
+        hazard: { DEFAULT: '#D95A00', dark: '#B84A00' },
+        go: { DEFAULT: '#1E7A44', light: '#E7F4EC', dark: '#155C33' },
+        warn: { DEFAULT: '#93650B', light: '#FCF1DA' },
+        danger: { DEFAULT: '#B3271E', light: '#FBEAE9' },
+        line: '#E4E7EC'
+      }
+    }
+  }
+}
+</script>
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  .font-display { font-family: 'Oswald', sans-serif; }
+  .tap-target { min-height: 52px; }
+  .tnum { font-variant-numeric: tabular-nums; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+</style>
+</head>
+<body class="bg-slate-pale text-navy">
+
+<div class="max-w-md mx-auto min-h-screen bg-white flex flex-col relative border-x border-line">
+
+  <!-- Top bar -->
+  <div class="bg-white border-b border-line px-5 py-4 sticky top-0 z-10">
+    <div class="flex items-center justify-between mb-1">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-hazard flex items-center justify-center shrink-0">
+          <span class="font-display text-white font-semibold text-base">R</span>
+        </div>
+        <div>
+          <p class="font-display text-lg font-semibold tracking-wide leading-none">RKitek</p>
+          <p class="text-[10px] uppercase tracking-widest text-slate mt-0.5">Owner dashboard</p>
+        </div>
+      </div>
+      <p class="text-xs text-slate" id="today-date">Today</p>
+    </div>
+  </div>
+
+  <!-- Sample data notice -->
+  <div class="bg-warn-light border-b border-line px-5 py-2.5">
+    <p class="text-xs text-warn">Sample fleet data — will sync with real driver devices once the backend is live.</p>
+  </div>
+
+  <!-- SCREEN: Dashboard -->
+  <div id="screen-dashboard" class="screen active flex-1 px-5 py-5 pb-24">
+
+    <!-- Fleet metrics -->
+    <p class="text-xs uppercase tracking-wider text-slate font-medium mb-2">Fleet today</p>
+    <div class="grid grid-cols-2 gap-3 mb-5">
+      <div class="rounded-lg border border-line border-l-4 border-l-navy p-4">
+        <p class="text-xs text-slate mb-1">Byahe completed</p>
+        <p class="text-2xl font-semibold tnum" id="metric-trips">0</p>
+      </div>
+      <div class="rounded-lg border border-line border-l-4 border-l-go p-4">
+        <p class="text-xs text-slate mb-1">Revenue</p>
+        <p class="text-2xl font-semibold tnum" id="metric-revenue">&#8369;0</p>
+      </div>
+      <div class="rounded-lg border border-line border-l-4 border-l-hazard p-4">
+        <p class="text-xs text-slate mb-1">Other expenses</p>
+        <p class="text-2xl font-semibold tnum" id="metric-expenses">&#8369;0</p>
+      </div>
+      <div class="rounded-lg border border-line border-l-4 border-l-slate p-4">
+        <p class="text-xs text-slate mb-1">Net margin</p>
+        <p class="text-2xl font-semibold tnum" id="metric-margin">&#8369;0</p>
+      </div>
+    </div>
+
+    <!-- Fleet status -->
+    <div class="flex items-center justify-between mb-2">
+      <p class="text-xs uppercase tracking-wider text-slate font-medium">Fleet</p>
+      <button id="add-truck-btn" class="flex items-center gap-1 text-xs font-medium text-navy">
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Add truck
+      </button>
+    </div>
+    <div id="fleet-list" class="flex flex-col gap-2 mb-5"></div>
+
+    <!-- Routes -->
+    <div class="flex items-center justify-between mb-2">
+      <p class="text-xs uppercase tracking-wider text-slate font-medium">Routes</p>
+      <button id="add-route-btn" class="flex items-center gap-1 text-xs font-medium text-navy">
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Add route
+      </button>
+    </div>
+    <div id="routes-list" class="flex flex-col gap-2 mb-5"></div>
+
+    <!-- Expenses -->
+    <div class="flex items-center justify-between mb-2">
+      <p class="text-xs uppercase tracking-wider text-slate font-medium">Expenses</p>
+      <button id="add-expense-btn" class="flex items-center gap-1 text-xs font-medium text-navy">
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Add expense
+      </button>
+    </div>
+    <div id="expenses-list" class="flex flex-col gap-2 mb-5"></div>
+
+    <!-- Recent byahe -->
+    <p class="text-xs uppercase tracking-wider text-slate font-medium mb-2">Recent byahe</p>
+    <div id="history-list" class="flex flex-col gap-2"></div>
+  </div>
+
+  <!-- Route editor modal (add / edit) -->
+  <div id="route-modal" class="hidden fixed inset-0 bg-black/40 z-50 items-end justify-center">
+    <div class="bg-white rounded-t-2xl p-5 w-full max-w-md max-h-[88vh] overflow-y-auto">
+      <div class="w-10 h-1 bg-line rounded-full mx-auto mb-4"></div>
+      <p class="text-xs uppercase tracking-wider text-navy font-medium mb-1" id="route-modal-title">Add route</p>
+
+      <div class="flex flex-col gap-2 mb-1">
+        <input id="route-origin" type="text" placeholder="Quarry (origin), e.g. Bacolor" class="tap-target border border-line rounded-md px-3 text-sm focus:outline-none focus:ring-1 focus:ring-navy" />
+        <input id="route-destination" type="text" placeholder="Destination, e.g. S.R." class="tap-target border border-line rounded-md px-3 text-sm focus:outline-none focus:ring-1 focus:ring-navy" />
+        <input id="route-type" type="text" placeholder="Material, e.g. Lahar" class="tap-target border border-line rounded-md px-3 text-sm focus:outline-none focus:ring-1 focus:ring-navy" />
+      </div>
+      <p id="route-form-error" class="hidden text-xs text-danger mb-3"></p>
+
+      <p class="text-xs uppercase tracking-wider text-slate font-medium mb-2">Fixed cost breakdown</p>
+      <div id="route-costs-inputs" class="grid grid-cols-2 gap-2 mb-4"></div>
+
+      <div class="grid grid-cols-2 gap-2 mb-4">
+        <div>
+          <label class="text-xs text-slate">Expected diesel/byahe</label>
+          <input id="route-expected" type="number" min="0" step="1" class="tap-target w-full border border-line rounded-md px-3 text-sm tnum focus:outline-none focus:ring-1 focus:ring-navy mt-1" />
+        </div>
+        <div>
+          <label class="text-xs text-slate">Sale price/byahe</label>
+          <input id="route-price" type="number" min="0" step="1" class="tap-target w-full border border-line rounded-md px-3 text-sm tnum focus:outline-none focus:ring-1 focus:ring-navy mt-1" />
+        </div>
+      </div>
+
+      <button id="delete-route-btn" class="hidden tap-target w-full border border-danger text-danger rounded-md text-sm font-medium mb-2">Delete route</button>
+      <div class="flex gap-2">
+        <button id="cancel-route-btn" class="tap-target flex-1 border border-line rounded-md text-sm font-medium">Cancel</button>
+        <button id="save-route-btn" class="tap-target flex-1 bg-navy text-white rounded-md text-sm font-medium">Save route</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete route confirmation modal -->
+  <div id="delete-route-modal" class="hidden fixed inset-0 bg-black/40 z-50 items-end justify-center px-5 pb-8">
+    <div class="bg-white rounded-lg p-5 w-full max-w-sm mb-8">
+      <p class="font-display text-base font-semibold mb-1">Delete this route?</p>
+      <p class="text-sm text-slate mb-4">Drivers will no longer see it in their route list. This can't be undone.</p>
+      <div class="flex gap-2">
+        <button id="delete-route-keep" class="tap-target flex-1 border border-line rounded-md text-sm font-medium">Keep route</button>
+        <button id="delete-route-confirm" class="tap-target flex-1 bg-danger text-white rounded-md text-sm font-medium">Delete route</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Expense editor modal -->
+  <div id="expense-modal" class="hidden fixed inset-0 bg-black/40 z-50 items-end justify-center">
+    <div class="bg-white rounded-t-2xl p-5 w-full max-w-md max-h-[88vh] overflow-y-auto">
+      <div class="w-10 h-1 bg-line rounded-full mx-auto mb-4"></div>
+      <p class="text-xs uppercase tracking-wider text-navy font-medium mb-3">Add expense</p>
+
+      <div class="flex flex-col gap-2 mb-1">
+        <select id="expense-category" class="tap-target border border-line rounded-md px-3 text-sm focus:outline-none focus:ring-1 focus:ring-navy bg-white">
+          <option value="Maintenance">Maintenance</option>
+          <option value="Repair">Repair</option>
+          <option value="Insurance">Insurance</option>
+          <option value="Registration">Registration</option>
+          <option value="Other">Other</option>
+        </select>
+        <select id="expense-truck" class="tap-target border border-line rounded-md px-3 text-sm focus:outline-none focus:ring-1 focus:ring-navy bg-white">
+          <option value="">General (not truck-specific)</option>
+        </select>
+        <input id="expense-amount" type="number" min="0" step="1" placeholder="Amount (PHP)" class="tap-target border border-line rounded-md px-3 text-sm tnum focus:outline-none focus:ring-1 focus:ring-navy" />
+        <input id="expense-date" type="date" class="tap-target border border-line rounded-md px-3 text-sm focus:outline-none focus:ring-1 focus:ring-navy" />
+        <input id="expense-note" type="text" placeholder="Note, e.g. Brake pads replacement" class="tap-target border border-line rounded-md px-3 text-sm focus:outline-none focus:ring-1 focus:ring-navy" />
+      </div>
+      <p id="expense-form-error" class="hidden text-xs text-danger mb-3"></p>
+
+      <div class="flex gap-2">
+        <button id="cancel-expense-btn" class="tap-target flex-1 border border-line rounded-md text-sm font-medium">Cancel</button>
+        <button id="save-expense-btn" class="tap-target flex-1 bg-navy text-white rounded-md text-sm font-medium">Save expense</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete expense confirmation modal -->
+  <div id="delete-expense-modal" class="hidden fixed inset-0 bg-black/40 z-50 items-end justify-center px-5 pb-8">
+    <div class="bg-white rounded-lg p-5 w-full max-w-sm mb-8">
+      <p class="font-display text-base font-semibold mb-1">Delete this expense?</p>
+      <p class="text-sm text-slate mb-4">This can't be undone.</p>
+      <div class="flex gap-2">
+        <button id="delete-expense-keep" class="tap-target flex-1 border border-line rounded-md text-sm font-medium">Keep</button>
+        <button id="delete-expense-confirm" class="tap-target flex-1 bg-danger text-white rounded-md text-sm font-medium">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Truck editor modal -->
+  <div id="truck-modal" class="hidden fixed inset-0 bg-black/40 z-50 items-end justify-center">
+    <div class="bg-white rounded-t-2xl p-5 w-full max-w-md max-h-[85vh] overflow-y-auto">
+      <div class="w-10 h-1 bg-line rounded-full mx-auto mb-4"></div>
+      <p class="text-xs uppercase tracking-wider text-navy font-medium mb-3" id="truck-modal-title">Add truck</p>
+
+      <div class="flex flex-col gap-2 mb-1">
+        <input id="truck-plate" type="text" placeholder="Plate number, e.g. CCE 1234" class="tap-target border border-line rounded-md px-3 text-sm focus:outline-none focus:ring-1 focus:ring-navy" />
+        <input id="truck-driver" type="text" placeholder="Driver name" class="tap-target border border-line rounded-md px-3 text-sm focus:outline-none focus:ring-1 focus:ring-navy" />
+        <input id="truck-codriver" type="text" placeholder="Co-driver name" class="tap-target border border-line rounded-md px-3 text-sm focus:outline-none focus:ring-1 focus:ring-navy" />
+      </div>
+      <p id="truck-form-error" class="hidden text-xs text-danger mb-3"></p>
+
+      <button id="delete-truck-btn" class="hidden tap-target w-full border border-danger text-danger rounded-md text-sm font-medium mb-2">Remove truck</button>
+      <div class="flex gap-2">
+        <button id="cancel-truck-btn" class="tap-target flex-1 border border-line rounded-md text-sm font-medium">Cancel</button>
+        <button id="save-truck-btn" class="tap-target flex-1 bg-navy text-white rounded-md text-sm font-medium">Save truck</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete truck confirmation modal -->
+  <div id="delete-truck-modal" class="hidden fixed inset-0 bg-black/40 z-50 items-end justify-center px-5 pb-8">
+    <div class="bg-white rounded-lg p-5 w-full max-w-sm mb-8">
+      <p class="font-display text-base font-semibold mb-1">Remove this truck?</p>
+      <p class="text-sm text-slate mb-4">Its trip history stays intact, but it will no longer appear in your active fleet.</p>
+      <div class="flex gap-2">
+        <button id="delete-truck-keep" class="tap-target flex-1 border border-line rounded-md text-sm font-medium">Keep truck</button>
+        <button id="delete-truck-confirm" class="tap-target flex-1 bg-danger text-white rounded-md text-sm font-medium">Remove truck</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trip detail modal -->
+  <div id="trip-detail-modal" class="hidden fixed inset-0 bg-black/40 z-50 items-end justify-center">
+    <div class="bg-white rounded-t-2xl p-5 w-full max-w-md max-h-[85vh] overflow-y-auto">
+      <div class="w-10 h-1 bg-line rounded-full mx-auto mb-4"></div>
+      <div class="flex justify-between items-start mb-1">
+        <p class="font-display text-base font-semibold" id="detail-route">S.R. - Lahar</p>
+        <span class="text-xs text-slate tnum" id="detail-trip-num">Trip #3</span>
+      </div>
+      <p class="text-xs text-slate mb-4" id="detail-meta">CCE 1234 &middot; Edgar Santos &middot; Jul 7, 9:40 AM</p>
+
+      <div class="rounded-lg border border-line overflow-hidden mb-4">
+        <p class="text-xs uppercase tracking-wider text-slate font-medium px-4 py-3 bg-slate-pale border-b border-line">Cost breakdown</p>
+        <div class="text-sm divide-y divide-line" id="detail-costs"></div>
+        <div class="flex justify-between items-center px-4 py-2 border-t border-line">
+          <span class="text-slate text-sm">Diesel</span>
+          <span class="font-medium tnum" id="detail-diesel">2,000</span>
+        </div>
+        <div class="flex justify-between items-center px-4 py-3 bg-slate-pale border-t border-line">
+          <span class="font-medium text-sm">Total cost</span>
+          <span class="font-semibold text-base tnum" id="detail-total">3,844</span>
+        </div>
+      </div>
+
+      <div class="rounded-lg border border-line overflow-hidden mb-4">
+        <div class="flex justify-between items-center px-4 py-3">
+          <span class="text-slate text-sm">Sale price</span>
+          <span class="font-medium tnum" id="detail-price">10,500</span>
+        </div>
+        <div class="flex justify-between items-center px-4 py-3 bg-slate-pale border-t border-line">
+          <span class="font-medium text-sm">Margin</span>
+          <span class="font-semibold text-base tnum" id="detail-margin">+6,656</span>
+        </div>
+      </div>
+
+      <button id="close-detail-btn" class="tap-target w-full border border-line rounded-md text-sm font-medium">Close</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const costKeys = ["Source", "Loader", "Toll", "Checker", "Meal", "P. Way"];
+
+function routeLabel(r) { return `${r.destination} - ${r.type}`; }
+function formatPeso(n) { return '\u20b1' + Math.round(n).toLocaleString(); }
+
+// --- Seed data (sample, illustrative until backend is live) ---
+let routes = JSON.parse(localStorage.getItem('ownerRoutes') || 'null') || [
+  { id: 1, origin: "Bacolor", destination: "S.R.", type: "Lahar",
+    costs: { Source: 2700, Loader: 100, Toll: 384, Checker: 150, Meal: 150, "P. Way": 360 },
+    expected: 2000, price: 10500 },
+  { id: 2, origin: "Porac", destination: "JH8", type: "Sand",
+    costs: { Source: 2100, Loader: 100, Toll: 250, Checker: 150, Meal: 150, "P. Way": 300 },
+    expected: 1500, price: 8200 }
+];
+
+let fleet = JSON.parse(localStorage.getItem('ownerFleet') || 'null') || [
+  { id: 1, plate: "CCE 1234", driver: "Edgar Santos", codriver: "Noli Bautista", status: "active", currentRoute: "S.R. - Lahar", dieselPct: 62, tripsToday: 3 },
+  { id: 2, plate: "GHT 5567", driver: "Rommel Cruz", codriver: "Ariel Domingo", status: "idle", currentRoute: null, dieselPct: 28, tripsToday: 2 }
+];
+
+const history = [
+  { truck: "CCE 1234", driver: "Edgar Santos", route: "S.R. - Lahar", quarry: "Bacolor", tripNum: 3, total: 3844, price: 10500, diesel: 2000, timestamp: "2026-07-07T09:40:00",
+    costs: { Source: 2700, Loader: 100, Toll: 384, Checker: 150, Meal: 150, "P. Way": 360 } },
+  { truck: "GHT 5567", driver: "Rommel Cruz", route: "JH8 - Sand", quarry: "Porac", tripNum: 2, total: 3000, price: 8200, diesel: 1500, timestamp: "2026-07-07T08:55:00",
+    costs: { Source: 2100, Loader: 100, Toll: 250, Checker: 150, Meal: 150, "P. Way": 250 } },
+  { truck: "CCE 1234", driver: "Edgar Santos", route: "S.R. - Lahar", quarry: "Bacolor", tripNum: 2, total: 3844, price: 10500, diesel: 2000, timestamp: "2026-07-07T07:20:00",
+    costs: { Source: 2700, Loader: 100, Toll: 384, Checker: 150, Meal: 150, "P. Way": 360 } },
+  { truck: "GHT 5567", driver: "Rommel Cruz", route: "JH8 - Sand", quarry: "Porac", tripNum: 1, total: 3000, price: 8200, diesel: 1500, timestamp: "2026-07-07T06:10:00",
+    costs: { Source: 2100, Loader: 100, Toll: 250, Checker: 150, Meal: 150, "P. Way": 250 } },
+  { truck: "CCE 1234", driver: "Edgar Santos", route: "S.R. - Lahar", quarry: "Bacolor", tripNum: 1, total: 3844, price: 10500, diesel: 2000, timestamp: "2026-07-07T05:30:00",
+    costs: { Source: 2700, Loader: 100, Toll: 384, Checker: 150, Meal: 150, "P. Way": 360 } }
+];
+
+let expenses = JSON.parse(localStorage.getItem('ownerExpenses') || 'null') || [
+  { id: 1, truck: "CCE 1234", category: "Maintenance", amount: 4500, date: "2026-07-05", note: "Brake pads replacement" },
+  { id: 2, truck: "GHT 5567", category: "Repair", amount: 8200, date: "2026-07-03", note: "Transmission repair" },
+  { id: 3, truck: "", category: "Insurance", amount: 3000, date: "2026-07-01", note: "Monthly premium" }
+];
+
+document.getElementById('today-date').textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+
+function refreshTruckSelect() {
+  const truckSelect = document.getElementById('expense-truck');
+  const current = truckSelect.value;
+  truckSelect.innerHTML = '<option value="">General (not truck-specific)</option>';
+  fleet.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.plate;
+    opt.textContent = t.plate;
+    truckSelect.appendChild(opt);
+  });
+  truckSelect.value = current;
+}
+refreshTruckSelect();
+
+function saveRoutes() {
+  localStorage.setItem('ownerRoutes', JSON.stringify(routes));
+}
+function saveExpenses() {
+  localStorage.setItem('ownerExpenses', JSON.stringify(expenses));
+}
+function saveFleet() {
+  localStorage.setItem('ownerFleet', JSON.stringify(fleet));
+}
+
+function renderMetrics() {
+  const totalTrips = history.length;
+  const totalRevenue = history.reduce((s, h) => s + h.price, 0);
+  const totalDiesel = history.reduce((s, h) => s + h.diesel, 0);
+  const totalTripCost = history.reduce((s, h) => s + h.total, 0);
+  const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
+  const netMargin = totalRevenue - totalTripCost - totalDiesel - totalExpenses;
+
+  document.getElementById('metric-trips').textContent = totalTrips;
+  document.getElementById('metric-revenue').textContent = formatPeso(totalRevenue);
+  document.getElementById('metric-expenses').textContent = formatPeso(totalExpenses);
+  document.getElementById('metric-margin').textContent = formatPeso(netMargin);
+}
+
+function renderFleet() {
+  const el = document.getElementById('fleet-list');
+  el.innerHTML = '';
+  fleet.forEach(t => {
+    const card = document.createElement('button');
+    card.className = "text-left w-full rounded-lg border border-line active:border-navy px-4 py-3";
+    const statusPill = t.status === 'active'
+      ? `<span class="text-xs font-medium text-white bg-go rounded-full px-2 py-0.5">Active</span>`
+      : `<span class="text-xs font-medium text-slate bg-slate-pale rounded-full px-2 py-0.5">Idle</span>`;
+    const dieselColor = t.dieselPct < 20 ? 'bg-danger' : (t.dieselPct < 50 ? 'bg-warn' : 'bg-go');
+    card.innerHTML = `
+      <div class="flex justify-between items-start mb-1">
+        <div>
+          <p class="font-display text-sm font-semibold tnum">${t.plate}</p>
+          <p class="text-xs text-slate mt-0.5">${t.driver} &middot; ${t.codriver}</p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          ${statusPill}
+          <svg class="h-4 w-4 text-slate-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.5-9.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+      </div>
+      <p class="text-xs text-slate mt-2">${t.status === 'active' ? 'On: ' + t.currentRoute : 'No active byahe'} &middot; ${t.tripsToday} byahe today</p>
+      <div class="h-1.5 bg-slate-pale rounded-full overflow-hidden mt-2">
+        <div class="h-full ${dieselColor}" style="width:${t.dieselPct}%"></div>
+      </div>
+    `;
+    card.onclick = () => openTruckModal(t.id);
+    el.appendChild(card);
+  });
+}
+
+function renderRoutes() {
+  const el = document.getElementById('routes-list');
+  el.innerHTML = '';
+  routes.forEach(r => {
+    const margin = r.price - Object.values(r.costs).reduce((a,b) => a+b, 0);
+    const card = document.createElement('div');
+    card.className = "rounded-lg border border-line px-4 py-3";
+    card.innerHTML = `
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="font-medium text-sm">${routeLabel(r)}</p>
+          <p class="text-xs text-slate mt-0.5">Quarry: ${r.origin} &middot; Margin ${formatPeso(margin)}</p>
+        </div>
+        <button class="edit-route-btn text-navy shrink-0 ml-2" data-id="${r.id}" aria-label="Edit route">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.5-9.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+      </div>
+    `;
+    el.appendChild(card);
+  });
+  document.querySelectorAll('.edit-route-btn').forEach(btn => {
+    btn.onclick = () => openRouteModal(parseInt(btn.dataset.id));
+  });
+}
+
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  el.innerHTML = '';
+  history.forEach((h, idx) => {
+    const margin = h.price - h.total;
+    const marginColor = margin >= 0 ? 'text-go' : 'text-danger';
+    const d = new Date(h.timestamp);
+    const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const timeStr = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    const row = document.createElement('button');
+    row.className = "text-left w-full rounded-lg border border-line active:border-navy px-4 py-3";
+    row.innerHTML = `
+      <div class="flex justify-between items-start mb-1">
+        <p class="font-medium text-sm">${h.route}</p>
+        <span class="text-xs text-slate tnum">${h.truck}</span>
+      </div>
+      <p class="text-xs text-slate mb-1">${dateStr}, ${timeStr} &middot; ${h.driver} &middot; Trip #${h.tripNum}</p>
+      <div class="flex justify-between items-center">
+        <p class="text-xs text-slate-light">Cost ${h.total.toLocaleString()} &middot; Price ${h.price.toLocaleString()}</p>
+        <p class="text-sm font-semibold tnum ${marginColor}">${margin >= 0 ? '+' : ''}${formatPeso(margin)}</p>
+      </div>
+    `;
+    row.onclick = () => openTripDetail(idx);
+    el.appendChild(row);
+  });
+}
+
+function renderExpenses() {
+  const el = document.getElementById('expenses-list');
+  el.innerHTML = '';
+  const sorted = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+  sorted.forEach(e => {
+    const d = new Date(e.date + 'T00:00:00');
+    const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const row = document.createElement('button');
+    row.className = "text-left rounded-lg border border-line px-4 py-3";
+    row.innerHTML = `
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="font-medium text-sm">${e.category}</p>
+          <p class="text-xs text-slate mt-0.5">${dateStr} &middot; ${e.truck || 'General'}${e.note ? ' &middot; ' + e.note : ''}</p>
+        </div>
+        <p class="text-sm font-semibold tnum text-danger shrink-0 ml-2">-${formatPeso(e.amount)}</p>
+      </div>
+    `;
+    row.onclick = () => openDeleteExpense(e.id);
+    el.appendChild(row);
+  });
+}
+
+// --- Route modal ---
+let editingRouteId = null;
+
+function openModal(id) {
+  const el = document.getElementById(id);
+  el.classList.remove('hidden');
+  el.classList.add('flex');
+}
+function closeModal(id) {
+  const el = document.getElementById(id);
+  el.classList.remove('flex');
+  el.classList.add('hidden');
+}
+
+function buildCostInputs(costs) {
+  const el = document.getElementById('route-costs-inputs');
+  el.innerHTML = '';
+  costKeys.forEach(k => {
+    el.innerHTML += `
+      <div>
+        <label class="text-xs text-slate">${k}</label>
+        <input type="number" min="0" step="1" data-cost-key="${k}" value="${costs ? costs[k] : ''}" class="route-cost-input tap-target w-full border border-line rounded-md px-3 text-sm tnum focus:outline-none focus:ring-1 focus:ring-navy mt-1" />
+      </div>
+    `;
+  });
+}
+
+function openRouteModal(id) {
+  editingRouteId = id || null;
+  const r = id ? routes.find(x => x.id === id) : null;
+
+  document.getElementById('route-modal-title').textContent = r ? 'Edit route' : 'Add route';
+  document.getElementById('route-origin').value = r ? r.origin : '';
+  document.getElementById('route-destination').value = r ? r.destination : '';
+  document.getElementById('route-type').value = r ? r.type : '';
+  document.getElementById('route-expected').value = r ? r.expected : '';
+  document.getElementById('route-price').value = r ? r.price : '';
+  buildCostInputs(r ? r.costs : null);
+  document.getElementById('delete-route-btn').classList.toggle('hidden', !r);
+  document.getElementById('route-form-error').classList.add('hidden');
+
+  openModal('route-modal');
+}
+
+let editingTruckId = null;
+
+function openTruckModal(id) {
+  editingTruckId = id || null;
+  const t = id ? fleet.find(x => x.id === id) : null;
+
+  document.getElementById('truck-modal-title').textContent = t ? 'Edit truck' : 'Add truck';
+  document.getElementById('truck-plate').value = t ? t.plate : '';
+  document.getElementById('truck-driver').value = t ? t.driver : '';
+  document.getElementById('truck-codriver').value = t ? t.codriver : '';
+  document.getElementById('truck-form-error').classList.add('hidden');
+  document.getElementById('delete-truck-btn').classList.toggle('hidden', !t);
+
+  openModal('truck-modal');
+}
+
+document.getElementById('add-truck-btn').onclick = () => openTruckModal(null);
+document.getElementById('cancel-truck-btn').onclick = () => {
+  closeModal('truck-modal');
+};
+
+document.getElementById('save-truck-btn').onclick = () => {
+  const plate = document.getElementById('truck-plate').value.trim();
+  const driver = document.getElementById('truck-driver').value.trim();
+  const codriver = document.getElementById('truck-codriver').value.trim();
+  const errorEl = document.getElementById('truck-form-error');
+
+  if (!plate || !driver) {
+    errorEl.textContent = 'Fill in at least plate number and driver name.';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+  errorEl.classList.add('hidden');
+
+  if (editingTruckId) {
+    const idx = fleet.findIndex(t => t.id === editingTruckId);
+    fleet[idx] = { ...fleet[idx], plate, driver, codriver };
+  } else {
+    const newId = fleet.length ? Math.max(...fleet.map(t => t.id)) + 1 : 1;
+    fleet.push({ id: newId, plate, driver, codriver, status: 'idle', currentRoute: null, dieselPct: 100, tripsToday: 0 });
+  }
+  saveFleet();
+  renderFleet();
+  refreshTruckSelect();
+  closeModal('truck-modal');
+};
+
+document.getElementById('delete-truck-btn').onclick = () => {
+  if (!editingTruckId) return;
+  openModal('delete-truck-modal');
+};
+document.getElementById('delete-truck-keep').onclick = () => {
+  closeModal('delete-truck-modal');
+};
+document.getElementById('delete-truck-confirm').onclick = () => {
+  fleet = fleet.filter(t => t.id !== editingTruckId);
+  saveFleet();
+  renderFleet();
+  refreshTruckSelect();
+  closeModal('delete-truck-modal');
+  closeModal('truck-modal');
+};
+
+document.getElementById('add-route-btn').onclick = () => openRouteModal(null);
+
+let editingExpenseId = null;
+
+document.getElementById('add-expense-btn').onclick = () => {
+  document.getElementById('expense-category').value = 'Maintenance';
+  document.getElementById('expense-truck').value = '';
+  document.getElementById('expense-amount').value = '';
+  document.getElementById('expense-date').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('expense-note').value = '';
+  document.getElementById('expense-form-error').classList.add('hidden');
+  openModal('expense-modal');
+};
+
+document.getElementById('cancel-expense-btn').onclick = () => {
+  closeModal('expense-modal');
+};
+document.getElementById('save-expense-btn').onclick = () => {
+  const category = document.getElementById('expense-category').value;
+  const truck = document.getElementById('expense-truck').value;
+  const amount = parseFloat(document.getElementById('expense-amount').value);
+  const date = document.getElementById('expense-date').value;
+  const note = document.getElementById('expense-note').value.trim();
+  const errorEl = document.getElementById('expense-form-error');
+
+  if (isNaN(amount) || amount <= 0 || !date) {
+    errorEl.textContent = 'Enter a valid amount and date.';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+  errorEl.classList.add('hidden');
+
+  const newId = expenses.length ? Math.max(...expenses.map(e => e.id)) + 1 : 1;
+  expenses.push({ id: newId, truck, category, amount, date, note });
+  saveExpenses();
+  renderExpenses();
+  renderMetrics();
+  closeModal('expense-modal');
+};
+
+function openDeleteExpense(id) {
+  editingExpenseId = id;
+  openModal('delete-expense-modal');
+}
+document.getElementById('delete-expense-keep').onclick = () => {
+  closeModal('delete-expense-modal');
+};
+document.getElementById('delete-expense-confirm').onclick = () => {
+  expenses = expenses.filter(e => e.id !== editingExpenseId);
+  saveExpenses();
+  renderExpenses();
+  renderMetrics();
+  closeModal('delete-expense-modal');
+};
+
+document.getElementById('cancel-route-btn').onclick = () => {
+  closeModal('route-modal');
+};
+document.getElementById('save-route-btn').onclick = () => {
+  const origin = document.getElementById('route-origin').value.trim();
+  const destination = document.getElementById('route-destination').value.trim();
+  const type = document.getElementById('route-type').value.trim();
+  const expected = parseFloat(document.getElementById('route-expected').value) || 0;
+  const price = parseFloat(document.getElementById('route-price').value) || 0;
+  const errorEl = document.getElementById('route-form-error');
+
+  if (!origin || !destination || !type) {
+    errorEl.textContent = 'Fill in quarry, destination, and material.';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+  errorEl.classList.add('hidden');
+
+  const costs = {};
+  document.querySelectorAll('.route-cost-input').forEach(input => {
+    costs[input.dataset.costKey] = parseFloat(input.value) || 0;
+  });
+
+  if (editingRouteId) {
+    const idx = routes.findIndex(r => r.id === editingRouteId);
+    routes[idx] = { ...routes[idx], origin, destination, type, costs, expected, price };
+  } else {
+    const newId = routes.length ? Math.max(...routes.map(r => r.id)) + 1 : 1;
+    routes.push({ id: newId, origin, destination, type, costs, expected, price });
+  }
+  saveRoutes();
+  renderRoutes();
+  closeModal('route-modal');
+};
+
+document.getElementById('delete-route-btn').onclick = () => {
+  if (!editingRouteId) return;
+  openModal('delete-route-modal');
+};
+document.getElementById('delete-route-keep').onclick = () => {
+  closeModal('delete-route-modal');
+};
+document.getElementById('delete-route-confirm').onclick = () => {
+  routes = routes.filter(r => r.id !== editingRouteId);
+  saveRoutes();
+  renderRoutes();
+  closeModal('delete-route-modal');
+  closeModal('route-modal');
+};
+
+function openTripDetail(idx) {
+  const h = history[idx];
+  const margin = h.price - h.total;
+  const d = new Date(h.timestamp);
+  const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const timeStr = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+
+  document.getElementById('detail-route').textContent = h.route;
+  document.getElementById('detail-trip-num').textContent = `Trip #${h.tripNum}`;
+  document.getElementById('detail-meta').textContent = `${h.truck} \u00b7 ${h.driver} \u00b7 ${dateStr}, ${timeStr}`;
+
+  const costsEl = document.getElementById('detail-costs');
+  costsEl.innerHTML = '';
+  Object.entries(h.costs).forEach(([k, v]) => {
+    costsEl.innerHTML += `<div class="flex justify-between items-center px-4 py-2"><span class="text-slate">${k}</span><span class="font-medium tnum">${v.toLocaleString()}</span></div>`;
+  });
+
+  document.getElementById('detail-diesel').textContent = h.diesel.toLocaleString();
+  document.getElementById('detail-total').textContent = h.total.toLocaleString();
+  document.getElementById('detail-price').textContent = h.price.toLocaleString();
+  const marginEl = document.getElementById('detail-margin');
+  marginEl.textContent = `${margin >= 0 ? '+' : ''}${formatPeso(margin)}`;
+  marginEl.className = `font-semibold text-base tnum ${margin >= 0 ? 'text-go' : 'text-danger'}`;
+
+  openModal('trip-detail-modal');
+}
+document.getElementById('close-detail-btn').onclick = () => {
+  closeModal('trip-detail-modal');
+};
+
+renderMetrics();
+renderFleet();
+renderRoutes();
+renderExpenses();
+renderHistory();
+</script>
+</body>
+</html>
