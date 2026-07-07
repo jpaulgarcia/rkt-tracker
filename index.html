@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Byahe Tracker - Driver View</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { oswald: ['Oswald', 'sans-serif'], sans: ['Inter', 'sans-serif'] },
+      colors: {
+        navy: { DEFAULT: '#0B2545', dark: '#081A33', light: '#3D5A80' },
+        slate: { DEFAULT: '#475467', light: '#98A2B3', pale: '#F2F4F7' },
+        hazard: { DEFAULT: '#D95A00', dark: '#B84A00' },
+        go: { DEFAULT: '#1E7A44', light: '#E7F4EC', dark: '#155C33' },
+        warn: { DEFAULT: '#93650B', light: '#FCF1DA' },
+        danger: { DEFAULT: '#B3271E', light: '#FBEAE9' },
+        line: '#E4E7EC'
+      }
+    }
+  }
+}
+</script>
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  .font-display { font-family: 'Oswald', sans-serif; }
+  .tap-target { min-height: 56px; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .step-line { transition: background-color 0.3s ease; }
+  .step-dot { transition: all 0.3s ease; }
+  .tnum { font-variant-numeric: tabular-nums; }
+  @keyframes completion-pop {
+    0% { transform: scale(0.5); opacity: 0; }
+    60% { transform: scale(1.08); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .completion-pop { animation: completion-pop 0.4s ease-out; }
+</style>
+</head>
+<body class="bg-slate-pale text-navy">
+
+<div class="max-w-md mx-auto min-h-screen bg-white flex flex-col relative border-x border-line">
+
+  <!-- Top bar -->
+  <div class="bg-white border-b border-line px-5 py-4 sticky top-0 z-10">
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-hazard flex items-center justify-center shrink-0">
+          <span class="font-display text-white font-semibold text-base">R</span>
+        </div>
+        <div>
+          <p class="font-display text-lg font-semibold tracking-wide leading-none">RKitek</p>
+          <p class="text-[10px] uppercase tracking-widest text-slate mt-0.5">Byahe tracker</p>
+        </div>
+      </div>
+      <p class="font-display text-sm font-semibold tnum" id="driver-plate">CCE 1234</p>
+    </div>
+    <div class="flex items-center gap-3 text-xs text-slate pt-2 border-t border-line">
+      <span>Driver <span id="driver-name" class="text-navy font-medium">Edgar Santos</span></span>
+      <span class="text-line">&#124;</span>
+      <span>Co-driver <span id="codriver-name" class="text-navy font-medium">Noli Bautista</span></span>
+    </div>
+  </div>
+
+  <!-- SCREEN 1: Home / dashboard -->
+  <div id="screen-select" class="screen active flex-1 px-5 py-5 pb-24">
+    <p class="text-xs uppercase tracking-wider text-slate font-medium mb-1" id="today-date">Today</p>
+    <h1 class="font-display text-xl font-semibold mb-4" id="home-heading">Dashboard</h1>
+
+    <!-- Metric cards -->
+    <div class="grid grid-cols-2 gap-3 mb-5">
+      <div class="rounded-lg border border-line border-l-4 border-l-navy p-4">
+        <div class="flex items-center gap-1.5 mb-1">
+          <svg class="h-4 w-4 text-navy" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4M16 17H4m0 0l4 4m-4-4l4-4"/></svg>
+          <p class="text-xs text-slate">Byahe today</p>
+        </div>
+        <p class="text-2xl font-semibold tnum" id="stat-trips">0</p>
+      </div>
+      <div class="rounded-lg border border-line border-l-4 border-l-go p-4">
+        <div class="flex items-center gap-1.5 mb-1">
+          <svg class="h-4 w-4 text-go" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3c-3 3.5-5 6.3-5 9a5 5 0 0010 0c0-2.7-2-5.5-5-9z"/></svg>
+          <p class="text-xs text-slate">Diesel left</p>
+        </div>
+        <div class="flex items-center justify-between">
+          <p class="text-2xl font-semibold tnum" id="stat-diesel">&#8369;8.0k</p>
+          <button id="refuel-toggle-btn" aria-label="Refuel" class="w-9 h-9 rounded-full bg-go active:bg-go-dark flex items-center justify-center shrink-0">
+            <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 20V6a2 2 0 012-2h6a2 2 0 012 2v14M4 20h10M4 11h9m5-3l2 2v6a1.5 1.5 0 01-3 0V13a1 1 0 00-1-1h-1"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="refuel-row" class="hidden rounded-lg border border-line p-4 mb-5">
+      <div class="flex gap-2">
+        <input id="refuel-input" type="number" min="1" max="50000" step="1" placeholder="Refuel amount (PHP)" class="tap-target flex-1 border border-line rounded-md px-3 text-sm focus:outline-none focus:ring-1 focus:ring-navy" />
+        <button id="refuel-btn" class="tap-target bg-navy text-white text-sm font-medium px-4 rounded-md">Add</button>
+      </div>
+      <p id="refuel-error" class="hidden text-xs text-danger mt-2"></p>
+    </div>
+
+    <!-- Active trip continuation card (hidden unless a trip is in progress) -->
+    <div id="active-trip-banner" class="hidden rounded-lg border border-hazard bg-orange-50 p-4 mb-5">
+      <p class="text-xs uppercase tracking-wider text-hazard-dark font-medium mb-1">Byahe in progress</p>
+      <p class="font-display text-base font-semibold mb-0.5" id="banner-route">S.R. - Lahar</p>
+      <p class="text-sm text-slate mb-4"><span id="banner-step" class="font-medium text-navy">On the way to quarry</span></p>
+      <button id="continue-trip-btn" class="tap-target w-full bg-hazard text-white font-medium rounded-md text-sm mb-2 flex items-center justify-center gap-2">
+        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        Continue byahe
+      </button>
+      <button id="cancel-trip-btn" class="tap-target w-full text-center text-xs text-slate flex items-center justify-center gap-1.5">
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        Cancel byahe
+      </button>
+    </div>
+
+    <!-- Routes list (hidden while a trip is in progress) -->
+    <div id="routes-section">
+      <p class="text-xs uppercase tracking-wider text-slate font-medium mb-2">Routes</p>
+      <div id="byahe-list" class="flex flex-col gap-2"></div>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: Active trip -->
+  <div id="screen-active" class="screen flex-1 px-5 py-5 pb-24">
+    <button id="back-btn" class="tap-target flex items-center gap-2 text-sm text-slate font-medium mb-3 px-2 -ml-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+      Back to home
+    </button>
+
+    <div class="bg-navy text-white rounded-lg p-5 mb-4">
+      <div class="flex justify-between items-start mb-1">
+        <h2 class="font-display text-lg font-semibold" id="active-route">S.R. - Lahar</h2>
+        <span class="border border-white/25 text-white text-xs font-medium px-2 py-1 rounded tnum">Trip #<span id="trip-num">3</span></span>
+      </div>
+      <p class="text-sm text-white/60 mb-1" id="active-quarry">Quarry: Bacolor</p>
+      <p class="text-sm font-medium mb-6" id="active-status">On the way to quarry</p>
+
+      <!-- Stepper -->
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex flex-col items-center flex-1">
+          <div class="step-dot w-10 h-10 rounded-full bg-go flex items-center justify-center border border-go" data-step="0">
+            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+          </div>
+          <span class="text-xs mt-2 font-medium">Start</span>
+        </div>
+        <div class="step-line h-px flex-1 bg-white/25 -mt-6" data-line="0"></div>
+        <div class="flex flex-col items-center flex-1">
+          <div class="step-dot w-10 h-10 rounded-full bg-transparent border border-white/30 flex items-center justify-center text-white/70 text-sm font-medium" data-step="1">2</div>
+          <span class="text-xs mt-2 text-white/60">Loaded</span>
+        </div>
+        <div class="step-line h-px flex-1 bg-white/25 -mt-6" data-line="1"></div>
+        <div class="flex flex-col items-center flex-1">
+          <div class="step-dot w-10 h-10 rounded-full bg-transparent border border-white/30 flex items-center justify-center text-white/70 text-sm font-medium" data-step="2">3</div>
+          <span class="text-xs mt-2 text-white/60">Delivered</span>
+        </div>
+      </div>
+
+      <button id="action-btn" class="tap-target w-full bg-hazard active:bg-hazard-dark text-white font-medium rounded-md text-base">
+        Mark loaded
+      </button>
+    </div>
+
+    <!-- Route cost summary (read-only, pre-filled) -->
+    <div id="breakdown-card" class="rounded-lg border border-line overflow-hidden">
+      <p class="text-xs uppercase tracking-wider text-slate font-medium px-4 py-3 bg-slate-pale border-b border-line">Trip breakdown</p>
+      <div class="text-sm divide-y divide-line" id="breakdown"></div>
+      <div class="flex justify-between items-center px-4 py-3 bg-slate-pale border-t border-line">
+        <span class="font-medium text-sm">Total cost</span>
+        <span class="font-semibold text-base tnum" id="breakdown-total">3,844</span>
+      </div>
+    </div>
+
+    <!-- Completion feedback: shown briefly after confirming, before returning home -->
+    <div id="completion-feedback" class="hidden flex-col items-center justify-center text-center py-14">
+      <div class="w-16 h-16 rounded-full bg-go flex items-center justify-center mb-4 completion-pop">
+        <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      </div>
+      <p class="font-display text-lg font-semibold mb-1">Byahe completed</p>
+      <p class="text-sm text-slate" id="completion-summary">Trip #3 &middot; &#8369;3,844</p>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: History -->
+  <div id="screen-history" class="screen flex-1 px-5 py-5 pb-24">
+    <p class="text-xs uppercase tracking-wider text-slate font-medium mb-1">This device</p>
+    <h1 class="font-display text-xl font-semibold mb-4">History</h1>
+
+    <div id="history-summary" class="hidden grid grid-cols-2 gap-3 mb-5">
+      <div class="rounded-lg border border-line p-4">
+        <p class="text-xs text-slate mb-1">Byahe recorded</p>
+        <p class="text-2xl font-semibold tnum" id="summary-count">0</p>
+      </div>
+      <div class="rounded-lg border border-line p-4">
+        <p class="text-xs text-slate mb-1">Diesel used</p>
+        <p class="text-2xl font-semibold tnum" id="summary-diesel">&#8369;0</p>
+      </div>
+    </div>
+
+    <div id="history-empty" class="rounded-lg border border-line p-6 text-center">
+      <p class="text-sm text-slate">No byahe completed yet. Finished trips will show up here.</p>
+    </div>
+    <div id="history-list" class="flex flex-col gap-2"></div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-line flex justify-around items-center h-16 z-20">
+    <button id="nav-trips" class="nav-btn flex flex-col items-center justify-center flex-1 h-full text-navy">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4M16 17H4m0 0l4 4m-4-4l4-4"/></svg>
+      <span class="text-[10px] font-medium mt-1">Trips</span>
+    </button>
+    <button id="nav-history" class="nav-btn flex flex-col items-center justify-center flex-1 h-full text-slate-light">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span class="text-[10px] font-medium mt-1">History</span>
+    </button>
+  </div>
+
+  <!-- Cancel confirmation modal -->
+  <div id="cancel-modal" class="hidden fixed inset-0 bg-black/40 z-50 items-end justify-center px-5 pb-8">
+    <div class="bg-white rounded-lg p-5 w-full max-w-sm mb-8">
+      <p class="font-display text-base font-semibold mb-1">Cancel this byahe?</p>
+      <p class="text-sm text-slate mb-4">Progress on this trip will be lost. This can't be undone.</p>
+      <div class="flex gap-2">
+        <button id="cancel-modal-keep" class="tap-target flex-1 border border-line rounded-md text-sm font-medium">Keep byahe</button>
+        <button id="cancel-modal-confirm" class="tap-target flex-1 bg-danger text-white rounded-md text-sm font-medium">Cancel byahe</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Review modal: shown after "Mark delivered", lets the driver adjust values before completing -->
+  <div id="review-modal" class="hidden fixed inset-0 bg-black/40 z-50 items-end justify-center">
+    <div class="bg-white rounded-t-2xl p-5 w-full max-w-md max-h-[85vh] overflow-y-auto">
+      <div class="w-10 h-1 bg-line rounded-full mx-auto mb-4"></div>
+      <p class="text-xs uppercase tracking-wider text-go font-medium mb-1">Check before completing</p>
+      <p class="font-display text-base font-semibold mb-4" id="review-modal-route">S.R. - Lahar</p>
+
+      <div class="rounded-lg border border-line overflow-hidden mb-4">
+        <div class="text-sm divide-y divide-line" id="review-breakdown"></div>
+        <div class="flex justify-between items-center px-4 py-3 border-t border-line">
+          <span class="text-slate text-sm">Diesel used</span>
+          <input id="review-diesel-input" type="number" min="0" step="1" class="w-24 text-right border border-line rounded-md px-2 py-1 text-sm tnum focus:outline-none focus:ring-1 focus:ring-go" />
+        </div>
+        <div class="flex justify-between items-center px-4 py-3 bg-slate-pale border-t border-line">
+          <span class="font-medium text-sm">Total cost</span>
+          <span class="font-semibold text-base tnum" id="review-total">3,844</span>
+        </div>
+      </div>
+
+      <button id="confirm-complete-btn" class="tap-target w-full bg-go active:bg-go-dark text-white font-medium rounded-md text-base flex items-center justify-center gap-2">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        Confirm & complete
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const routes = [
+  { origin: "Bacolor", destination: "S.R.", type: "Lahar", expected: 2000,
+    costs: { Source: 2700, Loader: 100, Toll: 384, Checker: 150, Meal: 150, "P. Way": 360 } },
+  { origin: "Porac", destination: "JH8", type: "Sand", expected: 1500,
+    costs: { Source: 2100, Loader: 100, Toll: 250, Checker: 150, Meal: 150, "P. Way": 300 } }
+];
+const stepLabels = ["Start", "Loaded", "Delivered"];
+const statusLabels = ["On the way to quarry", "On the way to destination", "Delivered"];
+const actionLabels = ["Mark loaded", "Mark delivered", "Trip complete"];
+
+function routeLabel(r) { return `${r.destination} - ${r.type}`; }
+
+let dieselBalance = parseFloat(localStorage.getItem('dieselBalance')) || 10000;
+let tripsToday = parseInt(localStorage.getItem('tripsToday')) || 0;
+let activeTrip = JSON.parse(localStorage.getItem('activeTrip') || 'null');
+let history = JSON.parse(localStorage.getItem('tripHistory') || '[]');
+// activeTrip shape: { routeIndex, step, tripNum }
+
+document.getElementById('today-date').textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+
+const listEl = document.getElementById('byahe-list');
+routes.forEach((r, idx) => {
+  const card = document.createElement('button');
+  card.className = "tap-target text-left bg-white border border-line active:border-navy rounded-lg px-4 py-3";
+  card.innerHTML = `
+    <div class="flex justify-between items-center">
+      <div class="flex items-center gap-2">
+        <svg class="h-4 w-4 text-navy shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21s-6-5.686-6-10a6 6 0 1112 0c0 4.314-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>
+        <p class="font-medium text-sm">${routeLabel(r)}</p>
+      </div>
+      <span class="shrink-0 ml-2 flex items-center gap-1 bg-go text-white text-xs font-medium px-2.5 py-1.5 rounded-md">
+        <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        Start
+      </span>
+    </div>
+    <p class="text-xs text-slate mt-1">Quarry: ${r.origin}</p>
+    <p class="text-xs text-slate-light mt-0.5">${Object.entries(r.costs).map(([k,v])=>k+' '+v).join(' &middot; ')}</p>
+  `;
+  card.onclick = () => startRoute(idx);
+  listEl.appendChild(card);
+});
+
+function initials(name) {
+  return name.trim().split(/\s+/).map(w => w[0]).join('').slice(0,2).toUpperCase();
+}
+function loadProfile() {
+  const name = localStorage.getItem('driverName') || 'Edgar Santos';
+  const plate = localStorage.getItem('driverPlate') || 'CCE 1234';
+  const codriver = localStorage.getItem('codriverName') || 'Noli Bautista';
+  document.getElementById('driver-name').textContent = name;
+  document.getElementById('driver-plate').textContent = plate;
+  document.getElementById('codriver-name').textContent = codriver;
+}
+loadProfile();
+
+// --- Screen switching ---
+function showScreen(id) {
+  ['screen-select','screen-active','screen-history'].forEach(s => document.getElementById(s).classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+function setNavActive(id) {
+  document.getElementById('nav-trips').classList.toggle('text-navy', id === 'nav-trips');
+  document.getElementById('nav-trips').classList.toggle('text-slate-light', id !== 'nav-trips');
+  document.getElementById('nav-history').classList.toggle('text-navy', id === 'nav-history');
+  document.getElementById('nav-history').classList.toggle('text-slate-light', id !== 'nav-history');
+}
+document.getElementById('nav-trips').onclick = () => { activeTrip = JSON.parse(localStorage.getItem('activeTrip') || 'null'); renderHome(); showScreen('screen-select'); setNavActive('nav-trips'); };
+document.getElementById('nav-history').onclick = () => { renderHistory(); showScreen('screen-history'); setNavActive('nav-history'); };
+
+// --- Home rendering ---
+function formatK(amount) {
+  return '\u20b1' + (amount / 1000).toFixed(1) + 'k';
+}
+
+function renderHome() {
+  document.getElementById('stat-trips').textContent = tripsToday;
+  document.getElementById('stat-diesel').textContent = formatK(dieselBalance);
+
+  if (activeTrip) {
+    const r = routes[activeTrip.routeIndex];
+    document.getElementById('home-heading').textContent = 'Byahe in progress';
+    document.getElementById('banner-route').textContent = routeLabel(r);
+    document.getElementById('banner-step').textContent = statusLabels[activeTrip.step];
+    document.getElementById('active-trip-banner').classList.remove('hidden');
+    document.getElementById('routes-section').classList.add('hidden');
+  } else {
+    document.getElementById('home-heading').textContent = 'Dashboard';
+    document.getElementById('active-trip-banner').classList.add('hidden');
+    document.getElementById('routes-section').classList.remove('hidden');
+  }
+}
+
+document.getElementById('refuel-toggle-btn').onclick = () => {
+  document.getElementById('refuel-row').classList.toggle('hidden');
+  document.getElementById('refuel-error').classList.add('hidden');
+};
+document.getElementById('refuel-btn').onclick = () => {
+  const input = document.getElementById('refuel-input');
+  const errorEl = document.getElementById('refuel-error');
+  const val = parseFloat(input.value);
+
+  if (isNaN(val) || val <= 0) {
+    errorEl.textContent = 'Enter a valid refuel amount.';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+  if (val > 50000) {
+    errorEl.textContent = 'That amount looks too high for a single refuel. Double-check and try again.';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+
+  errorEl.classList.add('hidden');
+  dieselBalance += val;
+  localStorage.setItem('dieselBalance', dieselBalance);
+  input.value = '';
+  document.getElementById('refuel-row').classList.add('hidden');
+  renderHome();
+};
+
+document.getElementById('continue-trip-btn').onclick = () => {
+  activeTrip = JSON.parse(localStorage.getItem('activeTrip') || 'null');
+  if (!activeTrip) { renderHome(); return; }
+  openActiveScreen();
+};
+document.getElementById('cancel-trip-btn').onclick = () => {
+  openModal('cancel-modal');
+};
+document.getElementById('cancel-modal-keep').onclick = () => {
+  closeModal('cancel-modal');
+};
+document.getElementById('cancel-modal-confirm').onclick = () => {
+  activeTrip = null;
+  localStorage.removeItem('activeTrip');
+  closeModal('cancel-modal');
+  renderHome();
+};
+
+// --- Active trip screen ---
+function startRoute(idx) {
+  activeTrip = { routeIndex: idx, step: 0, tripNum: tripsToday + 1, startedAt: new Date().toISOString() };
+  localStorage.setItem('activeTrip', JSON.stringify(activeTrip));
+  openActiveScreen();
+}
+
+function openActiveScreen() {
+  const r = routes[activeTrip.routeIndex];
+  document.getElementById('active-route').textContent = routeLabel(r);
+  document.getElementById('active-quarry').textContent = `Quarry: ${r.origin}`;
+  document.getElementById('trip-num').textContent = activeTrip.tripNum;
+  document.getElementById('breakdown-total').textContent = Object.values(r.costs).reduce((a,b)=>a+b,0).toLocaleString();
+
+  const bd = document.getElementById('breakdown');
+  bd.innerHTML = '';
+  Object.entries(r.costs).forEach(([k,v]) => {
+    bd.innerHTML += `<div class="flex justify-between items-center px-4 py-2"><span class="text-slate">${k}</span><span class="font-medium tnum">${v.toLocaleString()}</span></div>`;
+  });
+
+  // Reset panel visibility for a fresh trip
+  document.getElementById('breakdown-card').classList.remove('hidden');
+  document.getElementById('completion-feedback').classList.remove('flex');
+  document.getElementById('completion-feedback').classList.add('hidden');
+  document.getElementById('action-btn').classList.remove('hidden');
+  closeModal('review-modal');
+
+  renderStepper(activeTrip.step);
+  showScreen('screen-active');
+}
+
+function renderStepper(step) {
+  document.querySelectorAll('.step-dot').forEach((dot) => {
+    const idx = parseInt(dot.dataset.step);
+    if (idx <= step) {
+      dot.className = "step-dot w-10 h-10 rounded-full bg-go flex items-center justify-center border border-go";
+      dot.innerHTML = '<svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>';
+    } else {
+      dot.className = "step-dot w-10 h-10 rounded-full bg-transparent border border-white/30 flex items-center justify-center text-white/70 text-sm font-medium";
+      dot.textContent = idx + 1;
+    }
+  });
+  document.querySelectorAll('.step-line').forEach((line) => {
+    const idx = parseInt(line.dataset.line);
+    line.classList.toggle('bg-go', idx < step);
+    line.classList.toggle('bg-white/25', idx >= step);
+  });
+  const btn = document.getElementById('action-btn');
+  btn.textContent = actionLabels[step];
+  btn.disabled = false;
+  btn.classList.remove('opacity-50');
+  document.getElementById('active-status').textContent = statusLabels[step];
+}
+
+document.getElementById('back-btn').onclick = () => {
+  activeTrip = JSON.parse(localStorage.getItem('activeTrip') || 'null');
+  renderHome();
+  showScreen('screen-select');
+  setNavActive('nav-trips');
+};
+
+function openModal(id) {
+  const el = document.getElementById(id);
+  el.classList.remove('hidden');
+  el.classList.add('flex');
+}
+function closeModal(id) {
+  const el = document.getElementById(id);
+  el.classList.remove('flex');
+  el.classList.add('hidden');
+}
+
+function openReview() {
+  const r = routes[activeTrip.routeIndex];
+  renderStepper(2);
+  document.getElementById('review-modal-route').textContent = routeLabel(r);
+
+  const rb = document.getElementById('review-breakdown');
+  rb.innerHTML = '';
+  Object.entries(r.costs).forEach(([k, v]) => {
+    rb.innerHTML += `<div class="flex justify-between items-center px-4 py-2">
+      <span class="text-slate">${k}</span>
+      <input type="number" min="0" step="1" value="${v}" data-cost-key="${k}" class="review-cost-input w-24 text-right border border-line rounded-md px-2 py-1 text-sm tnum focus:outline-none focus:ring-1 focus:ring-go" />
+    </div>`;
+  });
+  document.getElementById('review-diesel-input').value = r.expected;
+  updateReviewTotal();
+
+  openModal('review-modal');
+}
+
+function updateReviewTotal() {
+  let total = 0;
+  document.querySelectorAll('.review-cost-input').forEach(input => {
+    total += parseFloat(input.value) || 0;
+  });
+  document.getElementById('review-total').textContent = total.toLocaleString();
+}
+
+document.getElementById('review-modal').addEventListener('input', (e) => {
+  if (e.target.classList.contains('review-cost-input')) updateReviewTotal();
+});
+
+document.getElementById('action-btn').onclick = () => {
+  if (!activeTrip || activeTrip.step >= 2) return;
+  activeTrip.step++;
+  const now = new Date().toISOString();
+  if (activeTrip.step === 1) activeTrip.loadedAt = now;
+
+  if (activeTrip.step === 2) {
+    activeTrip.deliveredAt = now;
+    openReview();
+  } else {
+    localStorage.setItem('activeTrip', JSON.stringify(activeTrip));
+    renderStepper(activeTrip.step);
+  }
+};
+
+document.getElementById('confirm-complete-btn').onclick = () => {
+  const r = routes[activeTrip.routeIndex];
+  let total = 0;
+  document.querySelectorAll('.review-cost-input').forEach(input => {
+    total += parseFloat(input.value) || 0;
+  });
+  const dieselUsed = parseFloat(document.getElementById('review-diesel-input').value) || 0;
+
+  dieselBalance -= dieselUsed;
+  localStorage.setItem('dieselBalance', dieselBalance);
+  tripsToday++;
+  localStorage.setItem('tripsToday', tripsToday);
+
+  history.unshift({
+    tripNum: activeTrip.tripNum,
+    route: routeLabel(r),
+    quarry: r.origin,
+    total: total,
+    diesel: dieselUsed,
+    startedAt: activeTrip.startedAt,
+    loadedAt: activeTrip.loadedAt,
+    deliveredAt: activeTrip.deliveredAt,
+    timestamp: activeTrip.deliveredAt
+  });
+  localStorage.setItem('tripHistory', JSON.stringify(history));
+  localStorage.removeItem('activeTrip');
+
+  document.getElementById('completion-summary').textContent = `Trip #${activeTrip.tripNum} \u00b7 \u20b1${total.toLocaleString()}`;
+  closeModal('review-modal');
+  document.getElementById('breakdown-card').classList.add('hidden');
+  document.getElementById('completion-feedback').classList.remove('hidden');
+  document.getElementById('completion-feedback').classList.add('flex');
+  window.scrollTo(0, 0);
+
+  activeTrip = null;
+
+  setTimeout(() => {
+    renderHome();
+    showScreen('screen-select');
+    setNavActive('nav-trips');
+  }, 1400);
+};
+
+// --- History rendering ---
+function formatDuration(startIso, endIso) {
+  if (!startIso || !endIso) return null;
+  const mins = Math.round((new Date(endIso) - new Date(startIso)) / 60000);
+  if (mins < 60) return `${mins} min`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${h}h ${m}min`;
+}
+
+function renderHistory() {
+  const listEl = document.getElementById('history-list');
+  const emptyEl = document.getElementById('history-empty');
+  const summaryEl = document.getElementById('history-summary');
+  listEl.innerHTML = '';
+
+  if (history.length === 0) {
+    emptyEl.classList.remove('hidden');
+    summaryEl.classList.add('hidden');
+    return;
+  }
+  emptyEl.classList.add('hidden');
+  summaryEl.classList.remove('hidden');
+
+  const totalDiesel = history.reduce((sum, h) => sum + (h.diesel || 0), 0);
+  document.getElementById('summary-count').textContent = history.length;
+  document.getElementById('summary-diesel').textContent = '\u20b1' + totalDiesel.toLocaleString();
+
+  history.forEach(h => {
+    const d = new Date(h.timestamp);
+    const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const timeStr = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    const duration = formatDuration(h.startedAt, h.deliveredAt);
+    const row = document.createElement('div');
+    row.className = "rounded-lg border border-line px-4 py-3";
+    row.innerHTML = `
+      <div class="flex justify-between items-start mb-1">
+        <p class="font-medium text-sm">${h.route}</p>
+        <span class="text-xs text-slate tnum">Trip #${h.tripNum}</span>
+      </div>
+      <div class="flex justify-between items-center">
+        <p class="text-xs text-slate">${dateStr}, ${timeStr} &middot; Quarry: ${h.quarry}</p>
+        <p class="text-sm font-semibold tnum">${h.total.toLocaleString()}</p>
+      </div>
+      <div class="flex justify-between items-center mt-1">
+        <p class="text-xs text-slate-light">${duration ? 'Duration &middot; Diesel' : 'Diesel'}</p>
+        <p class="text-xs text-slate-light tnum">${duration ? duration + ' &middot; ' : ''}${(h.diesel || 0).toLocaleString()}</p>
+      </div>
+    `;
+    listEl.appendChild(row);
+  });
+}
+
+renderHome();
+</script>
+</body>
+</html>
