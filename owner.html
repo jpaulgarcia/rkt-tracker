@@ -29,6 +29,8 @@ tailwind.config = {
   .font-display { font-family: 'Oswald', sans-serif; }
   .tap-target { min-height: 52px; }
   .tnum { font-variant-numeric: tabular-nums; }
+  .period-btn { color: #475467; }
+  .period-btn.active { background: white; color: #0B2545; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
   .screen { display: none; }
   .screen.active { display: block; }
 </style>
@@ -59,18 +61,26 @@ tailwind.config = {
   </div>
 
   <!-- SCREEN: Dashboard -->
-  <div id="screen-dashboard" class="screen active flex-1 px-5 py-5 pb-24">
+  <!-- SCREEN: Overview -->
+  <div id="screen-overview" class="screen active flex-1 px-5 py-5 pb-28">
 
-    <!-- Fleet metrics -->
-    <p class="text-xs uppercase tracking-wider text-slate font-medium mb-2">Fleet today</p>
+    <!-- Period toggle -->
+    <div class="flex bg-slate-pale rounded-lg p-1 mb-4">
+      <button id="period-day" class="period-btn flex-1 tap-target text-sm font-medium rounded-md">Day</button>
+      <button id="period-week" class="period-btn flex-1 tap-target text-sm font-medium rounded-md">Week</button>
+      <button id="period-month" class="period-btn flex-1 tap-target text-sm font-medium rounded-md">Month</button>
+    </div>
+
+    <p class="text-xs text-slate mb-3"><span id="metric-trips" class="font-medium tnum text-navy">0</span> byahe <span id="period-label">today</span></p>
+
     <div class="grid grid-cols-2 gap-3 mb-5">
-      <div class="rounded-lg border border-line border-l-4 border-l-navy p-4">
-        <p class="text-xs text-slate mb-1">Byahe completed</p>
-        <p class="text-2xl font-semibold tnum" id="metric-trips">0</p>
-      </div>
       <div class="rounded-lg border border-line border-l-4 border-l-go p-4">
         <p class="text-xs text-slate mb-1">Revenue</p>
         <p class="text-2xl font-semibold tnum" id="metric-revenue">&#8369;0</p>
+      </div>
+      <div class="rounded-lg border border-line border-l-4 border-l-navy p-4">
+        <p class="text-xs text-slate mb-1">Trip expenses</p>
+        <p class="text-2xl font-semibold tnum" id="metric-trip-cost">&#8369;0</p>
       </div>
       <div class="rounded-lg border border-line border-l-4 border-l-hazard p-4">
         <p class="text-xs text-slate mb-1">Other expenses</p>
@@ -82,7 +92,15 @@ tailwind.config = {
       </div>
     </div>
 
-    <!-- Fleet status -->
+    <!-- Trend chart -->
+    <p class="text-xs uppercase tracking-wider text-slate font-medium mb-2">Byahe per day &middot; last 7 days</p>
+    <div class="rounded-lg border border-line p-4">
+      <div id="trend-chart" class="flex items-end justify-between gap-2" style="height:100px;"></div>
+    </div>
+  </div>
+
+  <!-- SCREEN: Fleet -->
+  <div id="screen-fleet" class="screen flex-1 px-5 py-5 pb-28">
     <div class="flex items-center justify-between mb-2">
       <p class="text-xs uppercase tracking-wider text-slate font-medium">Fleet</p>
       <button id="add-truck-btn" class="flex items-center gap-1 text-xs font-medium text-navy">
@@ -90,9 +108,11 @@ tailwind.config = {
         Add truck
       </button>
     </div>
-    <div id="fleet-list" class="flex flex-col gap-2 mb-5"></div>
+    <div id="fleet-list" class="flex flex-col gap-2"></div>
+  </div>
 
-    <!-- Routes -->
+  <!-- SCREEN: Routes -->
+  <div id="screen-routes" class="screen flex-1 px-5 py-5 pb-28">
     <div class="flex items-center justify-between mb-2">
       <p class="text-xs uppercase tracking-wider text-slate font-medium">Routes</p>
       <button id="add-route-btn" class="flex items-center gap-1 text-xs font-medium text-navy">
@@ -100,9 +120,11 @@ tailwind.config = {
         Add route
       </button>
     </div>
-    <div id="routes-list" class="flex flex-col gap-2 mb-5"></div>
+    <div id="routes-list" class="flex flex-col gap-2"></div>
+  </div>
 
-    <!-- Expenses -->
+  <!-- SCREEN: Expenses -->
+  <div id="screen-expenses" class="screen flex-1 px-5 py-5 pb-28">
     <div class="flex items-center justify-between mb-2">
       <p class="text-xs uppercase tracking-wider text-slate font-medium">Expenses</p>
       <button id="add-expense-btn" class="flex items-center gap-1 text-xs font-medium text-navy">
@@ -110,11 +132,32 @@ tailwind.config = {
         Add expense
       </button>
     </div>
-    <div id="expenses-list" class="flex flex-col gap-2 mb-5"></div>
+    <div id="expenses-list" class="flex flex-col gap-2"></div>
+  </div>
 
-    <!-- Recent byahe -->
+  <!-- SCREEN: Reports -->
+  <div id="screen-reports" class="screen flex-1 px-5 py-5 pb-28">
     <p class="text-xs uppercase tracking-wider text-slate font-medium mb-2">Recent byahe</p>
     <div id="history-list" class="flex flex-col gap-2"></div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[360px] bg-white rounded-full shadow-lg border border-line flex justify-around items-center h-16 z-20 px-2">
+    <button id="nav-overview" aria-label="Overview" class="nav-btn flex items-center justify-center w-11 h-11 rounded-full">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+    </button>
+    <button id="nav-fleet" aria-label="Fleet" class="nav-btn flex items-center justify-center w-11 h-11 rounded-full">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7h10v8H3zm10 3h4l3 3v2h-7zM6 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm11 0a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg>
+    </button>
+    <button id="nav-routes" aria-label="Routes" class="nav-btn flex items-center justify-center w-11 h-11 rounded-full">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21s-6-5.686-6-10a6 6 0 1112 0c0 4.314-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>
+    </button>
+    <button id="nav-expenses" aria-label="Expenses" class="nav-btn flex items-center justify-center w-11 h-11 rounded-full">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 14l2 2 4-4m5 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </button>
+    <button id="nav-reports" aria-label="Reports" class="nav-btn flex items-center justify-center w-11 h-11 rounded-full">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17V9m4 8V5m4 12v-6M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+    </button>
   </div>
 
   <!-- Route editor modal (add / edit) -->
@@ -250,6 +293,15 @@ tailwind.config = {
       <p class="text-xs text-slate mb-4" id="detail-meta">CCE 1234 &middot; Edgar Santos &middot; Jul 7, 9:40 AM</p>
 
       <div class="rounded-lg border border-line overflow-hidden mb-4">
+        <p class="text-xs uppercase tracking-wider text-slate font-medium px-4 py-3 bg-slate-pale border-b border-line">Timing</p>
+        <div class="text-sm divide-y divide-line" id="detail-timing"></div>
+        <div id="detail-idle-row" class="flex justify-between items-center px-4 py-3 bg-slate-pale border-t border-line">
+          <span class="text-slate text-sm">Idle before this byahe</span>
+          <span class="font-medium text-sm tnum" id="detail-idle">&mdash;</span>
+        </div>
+      </div>
+
+      <div class="rounded-lg border border-line overflow-hidden mb-4">
         <p class="text-xs uppercase tracking-wider text-slate font-medium px-4 py-3 bg-slate-pale border-b border-line">Cost breakdown</p>
         <div class="text-sm divide-y divide-line" id="detail-costs"></div>
         <div class="flex justify-between items-center px-4 py-2 border-t border-line">
@@ -284,6 +336,18 @@ const costKeys = ["Source", "Loader", "Toll", "Checker", "Meal", "P. Way"];
 
 function routeLabel(r) { return `${r.destination} - ${r.type}`; }
 function formatPeso(n) { return '\u20b1' + Math.round(n).toLocaleString(); }
+function formatDuration(startIso, endIso) {
+  const mins = Math.round((new Date(endIso) - new Date(startIso)) / 60000);
+  if (mins < 60) return `${mins}min`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${h}h ${m}min`;
+}
+function findPreviousTrip(entry) {
+  const sameTruck = history.filter(h => h.truck === entry.truck && new Date(h.timestamp) < new Date(entry.startedAt));
+  if (sameTruck.length === 0) return null;
+  return sameTruck.reduce((latest, h) => new Date(h.timestamp) > new Date(latest.timestamp) ? h : latest);
+}
 
 // --- Seed data (sample, illustrative until backend is live) ---
 let routes = JSON.parse(localStorage.getItem('ownerRoutes') || 'null') || [
@@ -301,17 +365,58 @@ let fleet = JSON.parse(localStorage.getItem('ownerFleet') || 'null') || [
 ];
 
 const history = [
-  { truck: "CCE 1234", driver: "Edgar Santos", route: "S.R. - Lahar", quarry: "Bacolor", tripNum: 3, total: 3844, price: 10500, diesel: 2000, timestamp: "2026-07-07T09:40:00",
+  { truck: "CCE 1234", driver: "Edgar Santos", route: "S.R. - Lahar", quarry: "Bacolor", tripNum: 3, total: 3844, price: 10500, diesel: 2000,
+    startedAt: "2026-07-07T08:10:00", loadedAt: "2026-07-07T08:50:00", timestamp: "2026-07-07T09:40:00",
     costs: { Source: 2700, Loader: 100, Toll: 384, Checker: 150, Meal: 150, "P. Way": 360 } },
-  { truck: "GHT 5567", driver: "Rommel Cruz", route: "JH8 - Sand", quarry: "Porac", tripNum: 2, total: 3000, price: 8200, diesel: 1500, timestamp: "2026-07-07T08:55:00",
+  { truck: "GHT 5567", driver: "Rommel Cruz", route: "JH8 - Sand", quarry: "Porac", tripNum: 2, total: 3000, price: 8200, diesel: 1500,
+    startedAt: "2026-07-07T07:05:00", loadedAt: "2026-07-07T07:50:00", timestamp: "2026-07-07T08:55:00",
     costs: { Source: 2100, Loader: 100, Toll: 250, Checker: 150, Meal: 150, "P. Way": 250 } },
-  { truck: "CCE 1234", driver: "Edgar Santos", route: "S.R. - Lahar", quarry: "Bacolor", tripNum: 2, total: 3844, price: 10500, diesel: 2000, timestamp: "2026-07-07T07:20:00",
+  { truck: "CCE 1234", driver: "Edgar Santos", route: "S.R. - Lahar", quarry: "Bacolor", tripNum: 2, total: 3844, price: 10500, diesel: 2000,
+    startedAt: "2026-07-07T06:05:00", loadedAt: "2026-07-07T06:45:00", timestamp: "2026-07-07T07:20:00",
     costs: { Source: 2700, Loader: 100, Toll: 384, Checker: 150, Meal: 150, "P. Way": 360 } },
-  { truck: "GHT 5567", driver: "Rommel Cruz", route: "JH8 - Sand", quarry: "Porac", tripNum: 1, total: 3000, price: 8200, diesel: 1500, timestamp: "2026-07-07T06:10:00",
+  { truck: "GHT 5567", driver: "Rommel Cruz", route: "JH8 - Sand", quarry: "Porac", tripNum: 1, total: 3000, price: 8200, diesel: 1500,
+    startedAt: "2026-07-07T05:00:00", loadedAt: "2026-07-07T05:35:00", timestamp: "2026-07-07T06:10:00",
     costs: { Source: 2100, Loader: 100, Toll: 250, Checker: 150, Meal: 150, "P. Way": 250 } },
-  { truck: "CCE 1234", driver: "Edgar Santos", route: "S.R. - Lahar", quarry: "Bacolor", tripNum: 1, total: 3844, price: 10500, diesel: 2000, timestamp: "2026-07-07T05:30:00",
+  { truck: "CCE 1234", driver: "Edgar Santos", route: "S.R. - Lahar", quarry: "Bacolor", tripNum: 1, total: 3844, price: 10500, diesel: 2000,
+    startedAt: "2026-07-07T04:15:00", loadedAt: "2026-07-07T04:50:00", timestamp: "2026-07-07T05:30:00",
     costs: { Source: 2700, Loader: 100, Toll: 384, Checker: 150, Meal: 150, "P. Way": 360 } }
 ];
+
+// Generate sample history for the previous 6 days so week/month filters and the trend chart have data.
+// Real usage: this whole block goes away once the backend streams actual driver history.
+(function seedPastDays() {
+  const dailyCounts = [2, 4, 3, 5, 3, 4]; // 6 days before today, oldest first
+  const truckDefs = [
+    { plate: "CCE 1234", driver: "Edgar Santos", route: routeLabel(routes[0]), quarry: routes[0].origin, costs: routes[0].costs, expected: routes[0].expected, price: routes[0].price },
+    { plate: "GHT 5567", driver: "Rommel Cruz", route: routeLabel(routes[1]), quarry: routes[1].origin, costs: routes[1].costs, expected: routes[1].expected, price: routes[1].price }
+  ];
+  const today = new Date('2026-07-07T00:00:00');
+
+  dailyCounts.forEach((count, i) => {
+    const dayOffset = dailyCounts.length - i;
+    const day = new Date(today);
+    day.setDate(day.getDate() - dayOffset);
+
+    for (let t = 0; t < count; t++) {
+      const truck = truckDefs[t % 2];
+      const startMinutes = (5 * 60) + t * 95;
+      const started = new Date(day);
+      started.setMinutes(startMinutes);
+      const loaded = new Date(started.getTime() + 35 * 60000);
+      const delivered = new Date(loaded.getTime() + 40 * 60000);
+      const total = Object.values(truck.costs).reduce((a, b) => a + b, 0);
+
+      history.push({
+        truck: truck.plate, driver: truck.driver, route: truck.route, quarry: truck.quarry,
+        tripNum: t + 1, total, price: truck.price, diesel: truck.expected,
+        startedAt: started.toISOString(), loadedAt: loaded.toISOString(), timestamp: delivered.toISOString(),
+        costs: truck.costs
+      });
+    }
+  });
+
+  history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+})();
 
 let expenses = JSON.parse(localStorage.getItem('ownerExpenses') || 'null') || [
   { id: 1, truck: "CCE 1234", category: "Maintenance", amount: 4500, date: "2026-07-05", note: "Brake pads replacement" },
@@ -320,6 +425,30 @@ let expenses = JSON.parse(localStorage.getItem('ownerExpenses') || 'null') || [
 ];
 
 document.getElementById('today-date').textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+
+function showScreen(id) {
+  ['screen-overview', 'screen-fleet', 'screen-routes', 'screen-expenses', 'screen-reports'].forEach(s => document.getElementById(s).classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+function setNavActive(id) {
+  ['nav-overview', 'nav-fleet', 'nav-routes', 'nav-expenses', 'nav-reports'].forEach(n => {
+    const btn = document.getElementById(n);
+    if (n === id) {
+      btn.classList.add('bg-navy', 'text-white');
+      btn.classList.remove('text-slate-light');
+    } else {
+      btn.classList.remove('bg-navy', 'text-white');
+      btn.classList.add('text-slate-light');
+    }
+  });
+}
+document.getElementById('nav-overview').onclick = () => { showScreen('screen-overview'); setNavActive('nav-overview'); };
+document.getElementById('nav-fleet').onclick = () => { showScreen('screen-fleet'); setNavActive('nav-fleet'); };
+document.getElementById('nav-routes').onclick = () => { showScreen('screen-routes'); setNavActive('nav-routes'); };
+document.getElementById('nav-expenses').onclick = () => { showScreen('screen-expenses'); setNavActive('nav-expenses'); };
+document.getElementById('nav-reports').onclick = () => { showScreen('screen-reports'); setNavActive('nav-reports'); };
+
 
 function refreshTruckSelect() {
   const truckSelect = document.getElementById('expense-truck');
@@ -345,18 +474,79 @@ function saveFleet() {
   localStorage.setItem('ownerFleet', JSON.stringify(fleet));
 }
 
+let currentPeriod = 'day';
+const NOW = new Date('2026-07-07T23:59:59'); // mock "now" anchor for sample data
+
+function periodStart(period) {
+  const start = new Date(NOW);
+  if (period === 'day') { start.setHours(0, 0, 0, 0); }
+  else if (period === 'week') { start.setDate(start.getDate() - 6); start.setHours(0, 0, 0, 0); }
+  else { start.setDate(start.getDate() - 29); start.setHours(0, 0, 0, 0); }
+  return start;
+}
+
+function setPeriod(period) {
+  currentPeriod = period;
+  ['period-day', 'period-week', 'period-month'].forEach(id => {
+    document.getElementById(id).classList.toggle('active', id === `period-${period}`);
+  });
+  document.getElementById('period-label').textContent = period === 'day' ? 'today' : (period === 'week' ? 'this week' : 'this month');
+  renderMetrics();
+}
+document.getElementById('period-day').onclick = () => setPeriod('day');
+document.getElementById('period-week').onclick = () => setPeriod('week');
+document.getElementById('period-month').onclick = () => setPeriod('month');
+
 function renderMetrics() {
-  const totalTrips = history.length;
-  const totalRevenue = history.reduce((s, h) => s + h.price, 0);
-  const totalDiesel = history.reduce((s, h) => s + h.diesel, 0);
-  const totalTripCost = history.reduce((s, h) => s + h.total, 0);
-  const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
-  const netMargin = totalRevenue - totalTripCost - totalDiesel - totalExpenses;
+  const start = periodStart(currentPeriod);
+  const periodHistory = history.filter(h => new Date(h.timestamp) >= start);
+  const periodExpenses = expenses.filter(e => new Date(e.date + 'T00:00:00') >= start);
+
+  const totalTrips = periodHistory.length;
+  const totalRevenue = periodHistory.reduce((s, h) => s + h.price, 0);
+  const totalDiesel = periodHistory.reduce((s, h) => s + h.diesel, 0);
+  const totalTripCost = periodHistory.reduce((s, h) => s + h.total, 0) + totalDiesel;
+  const totalExpenses = periodExpenses.reduce((s, e) => s + e.amount, 0);
+  const netMargin = totalRevenue - totalTripCost - totalExpenses;
 
   document.getElementById('metric-trips').textContent = totalTrips;
   document.getElementById('metric-revenue').textContent = formatPeso(totalRevenue);
+  document.getElementById('metric-trip-cost').textContent = formatPeso(totalTripCost);
   document.getElementById('metric-expenses').textContent = formatPeso(totalExpenses);
   document.getElementById('metric-margin').textContent = formatPeso(netMargin);
+
+  renderTrendChart();
+}
+
+function renderTrendChart() {
+  const el = document.getElementById('trend-chart');
+  el.innerHTML = '';
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(NOW);
+    d.setDate(d.getDate() - i);
+    d.setHours(0, 0, 0, 0);
+    const next = new Date(d);
+    next.setDate(next.getDate() + 1);
+    const count = history.filter(h => {
+      const ts = new Date(h.timestamp);
+      return ts >= d && ts < next;
+    }).length;
+    days.push({ date: d, count });
+  }
+  const maxCount = Math.max(1, ...days.map(d => d.count));
+  days.forEach(d => {
+    const barWrap = document.createElement('div');
+    barWrap.className = "flex-1 flex flex-col items-center justify-end h-full";
+    const heightPx = Math.round((d.count / maxCount) * 70) + 6;
+    const isToday = d.date.toDateString() === NOW.toDateString();
+    barWrap.innerHTML = `
+      <span class="text-[10px] text-slate font-medium mb-1 tnum">${d.count}</span>
+      <div class="w-full rounded-t-md ${isToday ? 'bg-hazard' : 'bg-navy'}" style="height:${heightPx}px"></div>
+      <span class="text-[9px] text-slate-light mt-1">${d.date.toLocaleDateString(undefined, { weekday: 'narrow' })}</span>
+    `;
+    el.appendChild(barWrap);
+  });
 }
 
 function renderFleet() {
@@ -369,6 +559,11 @@ function renderFleet() {
       ? `<span class="text-xs font-medium text-white bg-go rounded-full px-2 py-0.5">Active</span>`
       : `<span class="text-xs font-medium text-slate bg-slate-pale rounded-full px-2 py-0.5">Idle</span>`;
     const dieselColor = t.dieselPct < 20 ? 'bg-danger' : (t.dieselPct < 50 ? 'bg-warn' : 'bg-go');
+    const truckTrips = history.filter(h => h.truck === t.plate);
+    const avgCycleMins = truckTrips.length
+      ? Math.round(truckTrips.reduce((s, h) => s + (new Date(h.timestamp) - new Date(h.startedAt)) / 60000, 0) / truckTrips.length)
+      : null;
+    const avgCycleText = avgCycleMins ? `${Math.floor(avgCycleMins / 60)}h ${avgCycleMins % 60}min avg cycle` : 'No byahe yet';
     card.innerHTML = `
       <div class="flex justify-between items-start mb-1">
         <div>
@@ -380,7 +575,7 @@ function renderFleet() {
           <svg class="h-4 w-4 text-slate-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.5-9.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </div>
       </div>
-      <p class="text-xs text-slate mt-2">${t.status === 'active' ? 'On: ' + t.currentRoute : 'No active byahe'} &middot; ${t.tripsToday} byahe today</p>
+      <p class="text-xs text-slate mt-2">${t.status === 'active' ? 'On: ' + t.currentRoute : 'No active byahe'} &middot; ${t.tripsToday} byahe today &middot; ${avgCycleText}</p>
       <div class="h-1.5 bg-slate-pale rounded-full overflow-hidden mt-2">
         <div class="h-full ${dieselColor}" style="width:${t.dieselPct}%"></div>
       </div>
@@ -394,7 +589,7 @@ function renderRoutes() {
   const el = document.getElementById('routes-list');
   el.innerHTML = '';
   routes.forEach(r => {
-    const margin = r.price - Object.values(r.costs).reduce((a,b) => a+b, 0);
+    const margin = r.price - Object.values(r.costs).reduce((a,b) => a+b, 0) - r.expected;
     const card = document.createElement('div');
     card.className = "rounded-lg border border-line px-4 py-3";
     card.innerHTML = `
@@ -419,7 +614,8 @@ function renderHistory() {
   const el = document.getElementById('history-list');
   el.innerHTML = '';
   history.forEach((h, idx) => {
-    const margin = h.price - h.total;
+    const costWithDiesel = h.total + h.diesel;
+    const margin = h.price - costWithDiesel;
     const marginColor = margin >= 0 ? 'text-go' : 'text-danger';
     const d = new Date(h.timestamp);
     const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
@@ -431,9 +627,9 @@ function renderHistory() {
         <p class="font-medium text-sm">${h.route}</p>
         <span class="text-xs text-slate tnum">${h.truck}</span>
       </div>
-      <p class="text-xs text-slate mb-1">${dateStr}, ${timeStr} &middot; ${h.driver} &middot; Trip #${h.tripNum}</p>
+      <p class="text-xs text-slate mb-1">${dateStr}, ${timeStr} &middot; ${h.driver} &middot; Trip #${h.tripNum} &middot; ${formatDuration(h.startedAt, h.timestamp)}</p>
       <div class="flex justify-between items-center">
-        <p class="text-xs text-slate-light">Cost ${h.total.toLocaleString()} &middot; Price ${h.price.toLocaleString()}</p>
+        <p class="text-xs text-slate-light">Cost ${costWithDiesel.toLocaleString()} &middot; Price ${h.price.toLocaleString()}</p>
         <p class="text-sm font-semibold tnum ${marginColor}">${margin >= 0 ? '+' : ''}${formatPeso(margin)}</p>
       </div>
     `;
@@ -679,7 +875,8 @@ document.getElementById('delete-route-confirm').onclick = () => {
 
 function openTripDetail(idx) {
   const h = history[idx];
-  const margin = h.price - h.total;
+  const costWithDiesel = h.total + h.diesel;
+  const margin = h.price - costWithDiesel;
   const d = new Date(h.timestamp);
   const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   const timeStr = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
@@ -688,6 +885,17 @@ function openTripDetail(idx) {
   document.getElementById('detail-trip-num').textContent = `Trip #${h.tripNum}`;
   document.getElementById('detail-meta').textContent = `${h.truck} \u00b7 ${h.driver} \u00b7 ${dateStr}, ${timeStr}`;
 
+  const timeOf = iso => new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  const timingEl = document.getElementById('detail-timing');
+  timingEl.innerHTML = `
+    <div class="flex justify-between items-center px-4 py-2"><span class="text-slate">Started</span><span class="font-medium tnum">${timeOf(h.startedAt)}</span></div>
+    <div class="flex justify-between items-center px-4 py-2"><span class="text-slate">Loaded <span class="text-slate-light">(${formatDuration(h.startedAt, h.loadedAt)} at quarry)</span></span><span class="font-medium tnum">${timeOf(h.loadedAt)}</span></div>
+    <div class="flex justify-between items-center px-4 py-2"><span class="text-slate">Delivered <span class="text-slate-light">(${formatDuration(h.loadedAt, h.timestamp)} transit)</span></span><span class="font-medium tnum">${timeOf(h.timestamp)}</span></div>
+    <div class="flex justify-between items-center px-4 py-2"><span class="font-medium">Total duration</span><span class="font-semibold tnum">${formatDuration(h.startedAt, h.timestamp)}</span></div>
+  `;
+  const prevTrip = findPreviousTrip(h);
+  document.getElementById('detail-idle').textContent = prevTrip ? formatDuration(prevTrip.timestamp, h.startedAt) : 'First byahe of the day';
+
   const costsEl = document.getElementById('detail-costs');
   costsEl.innerHTML = '';
   Object.entries(h.costs).forEach(([k, v]) => {
@@ -695,7 +903,7 @@ function openTripDetail(idx) {
   });
 
   document.getElementById('detail-diesel').textContent = h.diesel.toLocaleString();
-  document.getElementById('detail-total').textContent = h.total.toLocaleString();
+  document.getElementById('detail-total').textContent = costWithDiesel.toLocaleString();
   document.getElementById('detail-price').textContent = h.price.toLocaleString();
   const marginEl = document.getElementById('detail-margin');
   marginEl.textContent = `${margin >= 0 ? '+' : ''}${formatPeso(margin)}`;
@@ -707,7 +915,8 @@ document.getElementById('close-detail-btn').onclick = () => {
   closeModal('trip-detail-modal');
 };
 
-renderMetrics();
+setNavActive('nav-overview');
+setPeriod('day');
 renderFleet();
 renderRoutes();
 renderExpenses();
